@@ -22,7 +22,7 @@ port = int(argv[4])
 print(">>> Creating public and private key")
 print(">>> Connecting to host...")
 server.connect((host, port))
-print(">>> Connected ..")
+print(">>> Connected.")
 
 
 
@@ -55,7 +55,7 @@ def cli(socket_):
     Función que se encarga de recibir comandos a través de la línea de comandos y asignarlos a las funciones
     indicadas.
     """
-    command = str(input())
+    command = str(input("$ "))
     if command[:4] == 'send':
         send_data(socket_, command[5:])
     if command == 'receive':
