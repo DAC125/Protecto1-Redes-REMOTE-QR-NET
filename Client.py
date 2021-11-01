@@ -5,25 +5,6 @@ from scapy.layers.inet import IP, TCP, Ether
 from Crypto.Cipher import PKCS1_OAEP
 from scapy.packet import Raw
 from Crypto.PublicKey import RSA
-'''
-Comprobación de argumentos
-'''
-argv = sys.argv
-if not ("-p" in argv) or not ('-h' in argv):
-    print('Use: python3 Client.py -h host -p port')
-    exit()
-
-'''
-Asignación de variables y constantes globales
-'''
-server = socket.socket()
-host = argv[2]
-port = int(argv[4])
-print(">>> Creating public and private key")
-print(">>> Connecting to host...")
-server.connect((host, port))
-print(">>> Connected.")
-
 
 
 def send_data(socket_, command):
@@ -66,15 +47,33 @@ def cli(socket_):
 Se establece la conexión con el servidor y se reciben la llaves publica del servidor para el cifrado.
 """
 if __name__ == "__main__":
-        try:
-            # Tell server that connection is OK
-            server.send("Client: OK".encode())
-            # Receive public key string from server
-            server_string = server.recv(1024)
-            server_string = server_string.decode()
-            # Convert string to key
-            server_public_key = RSA.importKey(server_string)
-            while True:
-                cli(server)
-        except KeyboardInterrupt:
-            server.close()
+    '''
+    Comprobación de argumentos
+    '''
+    argv = sys.argv
+    if not ("-p" in argv) or not ('-h' in argv):
+        print('Use: python3 Client.py -h host -p port')
+        exit()
+
+    '''
+    Asignación de variables y constantes globales
+    '''
+    server = socket.socket()
+    host = argv[2]
+    port = int(argv[4])
+    print(">>> Creating public and private key")
+    print(">>> Connecting to host...")
+    server.connect((host, port))
+    print(">>> Connected.")
+    try:
+        # Tell server that connection is OK
+        server.send("Client: OK".encode())
+        # Receive public key string from server
+        server_string = server.recv(1024)
+        server_string = server_string.decode()
+        # Convert string to key
+        server_public_key = RSA.importKey(server_string)
+        while True:
+            cli(server)
+    except KeyboardInterrupt:
+        server.close()
