@@ -5,69 +5,16 @@ import numpy as np
 from itertools import groupby, chain
 import qrcode
 import cv2
-from bitstring import BitArray
 import sys
-from PIL import Image  
-
-
-'''str1 = "" 
-
-frame = Ether(src='ff:19:4b:10:38:79', dst='00:19:4b:10:38:79') / IP(src='192.168.2.10', dst='192.168.1.1') / Raw("Hola")
-
-src = frame.src
-des = frame.dst
-a= bytes(frame)
-b = list(a)
-packetStr = "" # traverse in the string  
-packetStr += str(b[0])
-for by in range(1,len(b)): 
-        packetStr += ("-" + str(b[by]))  
-img = qrcode.make(packetStr)
-type(img)
-srcReplaced = src.replace(':', '')
-desReplaced = des.replace(':', '')
-img.save("./QRTransmission/"+str(srcReplaced)+"-"+str(desReplaced)+".png")
-
-
-
-print(b)
-c = bytes(b)
-print(c)'''
-
-a = "HOLAAAAAA"
-
-b = a.encode('utf-8')
-
-print(b)
-
-c = list(b)
-
-print(c)
-
-d = bytes(c)
-
-print(d)
-
-e = d.decode('utf-8')
-
-print(e)
-
-frame = Ether(src='ff:19:4b:10:38:79', dst='00:19:4b:10:38:79') / IP(src='192.168.2.10', dst='192.168.1.1',chksum = 0) / TCP() / Raw("hola")
-del frame[IP].chksum
-del frame[TCP].chksum
-frame.show2()
-
-packet = IP(src='192.168.2.10', dst='192.168.1.1',chksum = 0) / TCP() / Raw("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum")
-
-print(sys.getsizeof("Hola"))
-
+from PIL import Image
+import psutil
 
 
 class DispLuzAdap:
     """
-    Clase que se encarga de manejar la información en un dispositivo wavenet.
-    La cual tiene como atributos la lista de nodos, el tamaño máximo de un paquete
-    y la duración de un sonido de 1 segundo (1000 ms)
+    Clase que se encarga de manejar la información un dispositivo de luz en donde 
+    se convierten, se dividen los datos en tramas, y se envian y reciben estos qrs
+    para ser docodificados.
     """
 
     def __init__(self):
@@ -127,24 +74,28 @@ class DispLuzAdap:
             img.save("./QRTransmission/"+str(srcReplaced)+"-"+str(desReplaced)+".png")
             imgShow = Image.open("./QRTransmission/"+str(srcReplaced)+"-"+str(desReplaced)+".png")
             imgShow.show() 
-            sleep(3)
-            imgShow.close()
+            sleep(5)
+            for proc in psutil.process_iter():
+                if proc.name() == "eog":
+                    proc.kill()
 
     def readQRs(self):
-        cap = cv2.VideoCapture(-1)
+        cap = cv2.VideoCapture(0)
         detector = cv2.QRCodeDetector()
         while cap.isOpened():
             _,img = cap.read()
-            data,one,_ = detector.detectAndDecode(img)
+            data,one, _ = detector.detectAndDecode(img)
             if data:
                 a = data
                 break
             cv2.imshow('qrcodescanner app',img)
             if cv2.waitKey(1) == ord('q'):
                 break
-        cap.release(a)
+        data = str(a)
+        print(data)
+        #cap.release(a)
         cv2.destroyAllWindows()
-        return(str(a))
+        return(data)
 
     def receive(self, packet):
         qrData = self.readQRs()
@@ -154,12 +105,11 @@ class DispLuzAdap:
         del packet[IP].chksum
         del packet[TCP].chksum
         #ACA ENVIO EL PAQUETE HACIA LA OTRA LAYER
-        print('')
 
 
 
 
-
+packet = IP(src='192.168.2.10', dst='192.168.1.1',chksum = 0) / TCP() / Raw("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum")
                 
 device = DispLuzAdap()
 
