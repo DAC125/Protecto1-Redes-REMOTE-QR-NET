@@ -98,16 +98,16 @@ def connect_bot_to_IRC(server, port, channel, bot_nick, bot_pass):
         socket_qrnet.close()
         new_socket.close()
 
+if __name__ == "__main__":
+    argv = sys.argv
+    if not ("-h" in argv and "-p" in argv and "-c" in argv and
+        "-b" in argv and "-p" in argv):
+        print('Usage: python3 bot_irc.py -h host -p port -c channel -b bot_nick -p password')
 
-argv = sys.argv
-if not ("-h" in argv and "-p" in argv and "-c" in argv and 
-    "-b" in argv and "-p" in argv):
-    print('Usage: python3 bot_irc.py -h host -p port -c channel -b bot_nick -p password')
+    server   = argv[argv.index("-h") + 1]
+    port     = int(argv[argv.index("-p") + 1])
+    channel  = "#" + argv[argv.index("-c") + 1]
+    bot_nick = argv[argv.index("-b") + 1]
+    bot_pass = argv[argv.index("-p") + 1]
 
-server   = argv[argv.index("-h") + 1]
-port     = int(argv[argv.index("-p") + 1])
-channel  = "#" + argv[argv.index("-c") + 1]
-bot_nick = argv[argv.index("-b") + 1]
-bot_pass = argv[argv.index("-p") + 1]
-
-connect_bot_to_IRC(server, port, channel, bot_nick, bot_pass)
+    connect_bot_to_IRC(server, port, channel, bot_nick, bot_pass)
