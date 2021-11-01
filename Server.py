@@ -71,6 +71,9 @@ def routing(source, destine):
     return convert_list_to_string(keys)
 
 def handle_client(connection,address):
+    """
+    Funcion encargada de redireccionar los paquetes entre clientes.
+    """
     while True:
         try:
             data = connection.recv(2040)
@@ -98,9 +101,8 @@ def handle_client(connection,address):
 
 def talk_to_client(connection, address):
     """
-    Funcion que se encarga de mantener una comunicacion con los clientes.
-    En donde se redireccionan los datos para permitir una comunicacion cliente-cliente.
-    Y cliente-bot-channel-irc
+    Funcion que se encarga de recibir por primera vez los clientes.
+    Envia las llaves publicas para el encriptado.
     """
     cont = False
     while True:
@@ -126,9 +128,9 @@ with ThreadPoolExecutor(max_workers=thread_n) as executor:
         connection, address = socket.accept()
         connections[address[0]] = connection
         logging.info(f'>>> New connection from: {address}')
-        handle_client(connection,address)
         try:
             result = executor.submit(talk_to_client, connection, address)
+            communication = executor.submit(handle_client,connection,address)
         except KeyboardInterrupt:
             connection.close()
             socket.close()
