@@ -7,12 +7,14 @@ from scapy.packet import Raw
 from Crypto.PublicKey import RSA
 
 
-def send_data(socket_, p, server_public_key):
+def send_data(socket_, p1, server_public_key):
     """
     Funcion que se encarga de convertir un paquete de scapy a bytes encryptarlo usando rsa y enviarlo al
     servidor para que este lo envie al otro cliente.
     """
+
     try:
+        p = IP(dst=p1, chksum=0) / TCP() / Raw("Esto es una prueba!")
         p2 = p[IP]
         message = bytes(p2)
         encryptor = PKCS1_OAEP.new(server_public_key)
