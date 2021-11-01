@@ -8,6 +8,7 @@ from scapy.layers.inet import IP
 from Crypto import Random
 from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
+import time
 
 logging.basicConfig(level=logging.DEBUG, format='%(threadName)s : %(message)s \n')
 
@@ -69,6 +70,32 @@ def routing(source, destine):
     keys.append(nodes.get(destine))
     return convert_list_to_string(keys)
 
+def handle_client(connection,address):
+    while True:
+        try:
+            data = connection.recv(2040)
+        except socket.timeout as e:
+            err = e.args[0]
+            if err == 'timed out':
+                time.sleep(1)
+                continue
+            else:
+                print(e)
+                sys.exit(1)
+        except socket.error as e:
+            print(e)
+            sys.exit(1)
+        else:
+            logging.info(f'{address[0]} received: {data}')
+            decryptor = PKCS1_OAEP.new(private_key)
+            decrypted = decryptor.decrypt(ast.literal_eval(str(data)))
+            p2 = IP(decrypted)
+            client_connection = connections[p2[IP].dst]
+            connections["200.105.99.38"].send(decrypted)
+            client_connection.send(decrypted)
+            '''if not p[Raw] and connection != client_connection:
+                client_connection.send(data)'''
+
 def talk_to_client(connection, address):
     """
     Funcion que se encarga de mantener una comunicacion con los clientes.
@@ -80,18 +107,6 @@ def talk_to_client(connection, address):
         data = connection.recv(1024)
         if not data:
             break
-        if cont:
-            logging.info(f'{address[0]} received: {data}')
-            decryptor = PKCS1_OAEP.new(private_key)
-            decrypted = decryptor.decrypt(ast.literal_eval(str(data)))
-            p2 = IP(decrypted)
-            client_connection = connections[p2[IP].dst]
-            if connection != client_connection:
-                connections["200.105.99.38"].send(decrypted)
-                client_connection.send(decrypted)
-
-            '''if not p[Raw] and connection != client_connection:
-                client_connection.send(data)'''
         if data.decode("UTF-8") == "Client: OK":
             cont = True
             connection.send(bytes(public_key.exportKey()))
@@ -99,7 +114,6 @@ def talk_to_client(connection, address):
             nodes[address[0]] = data.decode('UTF-8')
     nodes.pop(address[0])
     logging.info(f"{address[0]} disconnected")
-    connection.close()  # Close the connection
 
 
 logging.info('>>> Server running')
@@ -112,6 +126,7 @@ with ThreadPoolExecutor(max_workers=thread_n) as executor:
         connection, address = socket.accept()
         connections[address[0]] = connection
         logging.info(f'>>> New connection from: {address}')
+        handle_client(connection,address)
         try:
             result = executor.submit(talk_to_client, connection, address)
         except KeyboardInterrupt:
