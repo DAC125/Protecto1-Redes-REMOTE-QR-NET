@@ -65,15 +65,16 @@ def cli(socket_):
 """
 Se establece la conexión con el servidor y se reciben la llaves publica del servidor para el cifrado.
 """
-try:
-    # Tell server that connection is OK
-    server.send("Client: OK".encode())
-    # Receive public key string from server
-    server_string = server.recv(1024)
-    server_string = server_string.decode()
-    # Convert string to key
-    server_public_key = RSA.importKey(server_string)
-    while True:
-        cli(server)
-except KeyboardInterrupt:
-    server.close()
+if __name__ == "__main__":
+        try:
+            # Tell server that connection is OK
+            server.send("Client: OK".encode())
+            # Receive public key string from server
+            server_string = server.recv(1024)
+            server_string = server_string.decode()
+            # Convert string to key
+            server_public_key = RSA.importKey(server_string)
+            while True:
+                cli(server)
+        except KeyboardInterrupt:
+            server.close()
