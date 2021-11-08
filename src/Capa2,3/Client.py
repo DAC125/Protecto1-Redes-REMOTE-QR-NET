@@ -1,6 +1,8 @@
 import hashlib
 import socket
 import sys
+import time
+import threading
 from scapy.layers.inet import IP, TCP, Ether
 from Crypto.Cipher import PKCS1_OAEP
 from scapy.packet import Raw
@@ -24,13 +26,29 @@ def send_data(socket_, p1, server_public_key,message):
     except Exception as e:
         raise e
 
-def receive_data(socket_, command):
+def handle_server(socket_):
     """
-    Funcion que se encarga de recibir un paquete de scapy enviado por otro cliente y redireccionado
-    por el servidor.
+    Esta funcion tiene como objetivo mantener una comunicacion con el bot irc y el server de red mesh.
+    Con esto podemos mandar mensajes de un cliente a un canal de el servidor irc.
     """
-    rdata = socket_.recv(8192)
-    IP(rdata).show()
+    while True:
+        try:
+            packet = socket_.recv(2040)
+        except socket.timeout as e:
+            err = e.args[0]
+            if err == 'timed out':
+                time.sleep(1)
+                continue
+            else:
+                print(e)
+                sys.exit(1)
+        except socket.error as e:
+            print(e)
+            sys.exit(1)
+        else:
+            print("Received message from server")
+            IP(packet).show()
+
 
 def cli(socket_):
     """
@@ -39,12 +57,7 @@ def cli(socket_):
     """
     command = str(input("$ ")).split()
     if command[0] == 'send':
-
         send_data(socket_, command[1],server_public_key,command[2])
-    if command == 'receive':
-        receive_data(socket_, command)
-
-
 """
 Se establece la conexión con el servidor y se reciben la llaves publica del servidor para el cifrado.
 """
@@ -75,7 +88,10 @@ if __name__ == "__main__":
         server_string = server_string.decode()
         # Convert string to key
         server_public_key = RSA.importKey(server_string)
+
+        h1 = threading.Thread(target=handle_server, args=(server,))
+        h1.start()
         while True:
-            cli(server)
+           cli(server)
     except KeyboardInterrupt:
         server.close()

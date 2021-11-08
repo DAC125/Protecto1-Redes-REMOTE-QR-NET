@@ -8,7 +8,12 @@ import cv2
 import sys
 from PIL import Image
 import psutil
+from Crypto.PublicKey import RSA
+from Crypto.Cipher import PKCS1_OAEP
 
+"""sys.path.append("../Capa2,3/")
+
+from Client import *"""
 
 class DispLuzAdap:
     """
@@ -97,20 +102,55 @@ class DispLuzAdap:
         cv2.destroyAllWindows()
         return(data)
 
+    def send_data(self, socket_, p1, server_public_key):
+        """
+        Funcion que se encarga de convertir un paquete de scapy a bytes encryptarlo usando rsa y enviarlo al
+        servidor para que este lo envie al otro cliente.
+        """
+        print(socket_)
+        try:
+            p = IP(dst='200.105.99.38', chksum=0) / TCP() / Raw("DACBOT")
+            p2 = p[IP]
+            message = bytes(p2)
+            encryptor = PKCS1_OAEP.new(server_public_key)
+            encrypted = encryptor.encrypt(message)
+            socket_.send(encrypted)
+            print("[+] Request Sent!")
+        except Exception as e:
+            raise e
+
     def receive(self, packet):
-        qrData = self.readQRs()
-        byteData = bytes(qrData)
-        packet = Ether(byteData)
-        del packet[Ether]
-        del packet[IP].chksum
-        del packet[TCP].chksum
+        packet = IP(dst='200.105.99.38', chksum=0) / TCP() / Raw("DACBOT")
+        #qrData = self.readQRs()
+        #byteData = bytes(qrData)
+        #packet = Ether(byteData)
+        #del packet[Ether]
+        #del packet[IP].chksum
+        #del packet[TCP].chksum
+        self.send_data(server,packet,server_public_key)
+
         #ACA ENVIO EL PAQUETE HACIA LA OTRA LAYER
 
 
+server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.connect(("18.223.241.184", 8001))
+
+try:
+    # Tell server that connection is OK
+    server.send("Client: OK".encode())
+    # Receive public key string from server
+    server_string = server.recv(1024)
+    server_string = server_string.decode()
+    # Convert string to key
+    server_public_key = RSA.importKey(server_string)
+
+    device = DispLuzAdap()
+
+    while True:
+        command = str(input("$ "))
+        if "send" == command:
+            device.send_data(server, 1, server_public_key)
+except KeyboardInterrupt:
+    server.close()
 
 
-packet = IP(src='192.168.2.10', dst='192.168.1.1',chksum = 0) / TCP() / Raw("Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum")
-                
-device = DispLuzAdap()
-
-device.send(packet)

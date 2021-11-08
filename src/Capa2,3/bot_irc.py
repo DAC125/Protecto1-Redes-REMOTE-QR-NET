@@ -70,7 +70,7 @@ def connect_bot_to_IRC(server, port, channel, bot_nick, bot_pass):
     # Definición del socket
     new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socket_qrnet = socket.socket()
-    socket_qrnet.connect(("18.223.241.184", 8000))
+    socket_qrnet.connect(("18.223.241.184", 8001))
     socket_qrnet.settimeout(2)
     new_socket.settimeout(2)
     print(f"Connecting to: {server} {port}")
