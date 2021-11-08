@@ -60,8 +60,6 @@ class DispLuzAdap:
         return frames
 
     def send(self, packet):
-        del packet[IP].chksum
-        del packet[TCP].chksum
         src = packet.src
         des = packet.dst
         frames = self.dividePayload(packet)
@@ -109,8 +107,7 @@ class DispLuzAdap:
         """
         print(socket_)
         try:
-            p = IP(dst='200.105.99.38', chksum=0) / TCP() / Raw("DACBOT")
-            p2 = p[IP]
+            p2 = p1[IP]
             message = bytes(p2)
             encryptor = PKCS1_OAEP.new(server_public_key)
             encrypted = encryptor.encrypt(message)
@@ -119,21 +116,18 @@ class DispLuzAdap:
         except Exception as e:
             raise e
 
-    def receive(self, packet):
-        packet = IP(dst='200.105.99.38', chksum=0) / TCP() / Raw("DACBOT")
-        #qrData = self.readQRs()
-        #byteData = bytes(qrData)
-        #packet = Ether(byteData)
-        #del packet[Ether]
-        #del packet[IP].chksum
-        #del packet[TCP].chksum
+    def receive(self, command):
+        packet = IP(dst=command[1], chksum=0) / TCP() / Raw(command[2])
+        del packet[IP].chksum
+        del packet[TCP].chksum
+        self.send(packet)
         self.send_data(server,packet,server_public_key)
 
         #ACA ENVIO EL PAQUETE HACIA LA OTRA LAYER
 
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.connect(("18.223.241.184", 8001))
+server.connect(("18.223.241.184", 8000))
 
 try:
     # Tell server that connection is OK
@@ -148,8 +142,9 @@ try:
 
     while True:
         command = str(input("$ "))
-        if "send" == command:
-            device.send_data(server, 1, server_public_key)
+        command = command.split()
+        if "send" in command:
+            device.receive(command)
 except KeyboardInterrupt:
     server.close()
 
